@@ -25,11 +25,13 @@ cd /workdir-rw
     cd $2
 }
 
-# is terraform already initialized? 
-[ -d '.terraform' ] && terraform get --update=true
+if [ -n "${DO_TF_INIT}" ]; then
+	# is terraform already initialized? 
+	[ [ -d '.terraform' ] || [ -d ${TF_DATA_DIR:-""} ] && terraform get --update=true
 
-# re-initialize anyway.
-terraform init -input=false
+	# re-initialize anyway.
+	terraform init -input=false
+fi
 
 # it's possible that we're in a sub-directory. leave.
 cd /workdir-rw

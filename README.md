@@ -38,6 +38,12 @@ Point *Blast Radius* at an `init-ed` *Terraform* project, and connect with your 
 *Additional note*:
 If you organised your terraform directories with stacks and modules, please call *Blast Radius* from the root directory and give the stack's directory as argument (plus the `--serve` argument).
 
+*Additional note*:
+You can specify DO_TF_INIT=true in the docker command line as an environment variable (-e DO_TF_INIT=true) if you want terraform init to be applied
+
+*Additional note*:
+You can specify TF_DATA_DIR in the docker command line as an environment variable (-e TF_DATA_DIR=$(pwd)/.terraform) if you want terraform to use an alternate state repository
+
 ```bash
 [...]$ tree -d
 /-- project

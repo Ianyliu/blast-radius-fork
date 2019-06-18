@@ -17,9 +17,6 @@
 
 FROM ubuntu:18.04
 
-#define default terraform version in environment var
-ENV TF_VERSION "0.12.1"
-
 #expose blast-radius port
 EXPOSE 5000
 
@@ -36,17 +33,20 @@ RUN apt-get update \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-#install terraform
 WORKDIR /src
 COPY . .
-RUN chmod +x ./docker-build.sh \
-    && ./docker-build.sh /src
 
 #create blast-radius package from source
-RUN pip3 install -e .
-
 #set up entrypoint script
-RUN chmod +x ./docker-entrypoint.sh
+RUN pip3 install -e . \
+    && chmod +x ./docker-entrypoint.sh
+
+#define default terraform version in environment var
+ENV TF_VERSION "0.11.14"
+
+#install terraform
+RUN chmod +x ./docker-build.sh \
+    && ./docker-build.sh /src
 
 #set up runtime workdir for tf files
 WORKDIR /workdir

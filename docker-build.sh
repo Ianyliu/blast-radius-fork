@@ -14,6 +14,3 @@ curl -o terraform.zip $terraform_url
 unzip terraform.zip
 mv terraform /usr/local/bin
 rm terraform.zip
-
-
-

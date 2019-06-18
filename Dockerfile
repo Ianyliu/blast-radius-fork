@@ -18,7 +18,7 @@
 FROM ubuntu:18.04
 
 #define default terraform version in environment var
-ENV TF_VERSION "0.12.0"
+ENV TF_VERSION "0.12.1"
 
 #expose blast-radius port
 EXPOSE 5000
@@ -31,6 +31,7 @@ RUN apt-get update \
     graphviz  \
     python3 \
     python3-pip \
+    python3-ply \
     jq \
     unzip \
     && rm -rf /var/lib/apt/lists/*

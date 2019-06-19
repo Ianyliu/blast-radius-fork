@@ -71,9 +71,9 @@ def graph_json():
     return dot.json()
 
 def run_tf_graph():
-    completed = subprocess.run(['terraform', 'graph'], stdout=subprocess.PIPE)
+    completed = subprocess.run(['terraform', 'graph'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if completed.returncode != 0:
-        raise
+        raise Exception('Execution error', completed.stderr)
     return completed.stdout.decode('utf-8')
 
 def get_help():

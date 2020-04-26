@@ -16,7 +16,7 @@ RUN pip install graphviz
 COPY --from=terraform /bin/terraform /bin/terraform
 COPY --from=provideribm /go/bin/terraform-provider-ibm_v* /root/.terraform.d/plugins/linux_amd64/terraform-provider-ibm
 COPY --from=hcl2json /go/bin/hcl2json /bin/hcl2json
-COPY ./docker-entrypoint.sh /bin/docker-entrypoint.sh
+COPY /docker-entrypoint.sh /bin/docker-entrypoint.sh
 RUN chmod +x /bin/docker-entrypoint.sh
 
 WORKDIR /bin

@@ -19,6 +19,14 @@ COPY --from=hcl2json /go/bin/hcl2json /bin/hcl2json
 COPY /docker-entrypoint.sh /bin/docker-entrypoint.sh
 RUN chmod +x /bin/docker-entrypoint.sh
 
+RUN \
+  apk update && \
+  apk add bash py-pip && \
+  apk add --virtual=build gcc libffi-dev musl-dev openssl-dev python-dev make && \
+  pip --no-cache-dir install -U pip && \
+  pip --no-cache-dir install azure-cli && \
+  apk del --purge build
+
 WORKDIR /bin
 RUN ls
 

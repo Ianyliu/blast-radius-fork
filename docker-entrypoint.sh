@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Log into Azure by entering az login --tenant <tenantid>"
+/bin/sh
+
 # If command starts with an option, prepend the blast-radius.
 if [ "${1}" != "blast-radius" ]; then
   if [ -n "${1}" ]; then

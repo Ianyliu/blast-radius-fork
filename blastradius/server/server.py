@@ -13,7 +13,6 @@ from flask import url_for
 
 import jinja2
 
-
 # 1st-party libraries
 from blastradius.handlers.dot import DotGraph, Format, DotNode
 from blastradius.handlers.terraform import Terraform

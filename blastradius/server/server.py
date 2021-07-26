@@ -13,9 +13,6 @@ from flask import url_for
 
 import jinja2
 
-from flask_images import Images,resized_img_src
-
-
 
 # 1st-party libraries
 from blastradius.handlers.dot import DotGraph, Format, DotNode

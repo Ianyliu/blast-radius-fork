@@ -70,28 +70,29 @@ class DotGraph(Graph):
                         type = sp[1].split(".")[0]
                         if type == "data":
                             #process data source:
-                            apply_data = None
-                            plan_data = None
+                            plan_data = "no plan available"
+                            policy_data = "no policy available"
+                            cost_data = "no cost available"
+                            time_data = "no time estimation available"
                             if ("not applied" in self.apply.apply_resource_info):
                                 apply_data = "not yet applied"
-                                plan_data = "data-source"
-                                self.nodes.append(DotNode(d['node'], plan_data, apply_data,"no cost data available","no policy data available","no time estimation available",fmt=fmt ))
+                                self.nodes.append(DotNode(d['node'], plan_data, apply_data,cost_data,policy_data,time_data,fmt=fmt ))
                                 break
 
                             else:
                                 for i in self.apply.apply_resource_info:
                                     if i['type']+"."+i['name'] == res:
                                         apply_data = i
-                                        plan_data = "data-source"
-                                        self.nodes.append(DotNode(d['node'], plan_data, apply_data,"no cost data available","no policy data available","no time estimation available",fmt=fmt ))
+                                        self.nodes.append(DotNode(d['node'], plan_data, apply_data,cost_data,policy_data,time_data,fmt=fmt ))
                                         break
                         else:
-                            if type == "provider":
-                                apply_data = {}
-                                plan_data = {}
-                                policy_data = {}
-                                cost_data = {}
-                                self.nodes.append(DotNode(d['node'], plan_data, apply_data,"no cost data available","no policy data available","no time estimation available",fmt=fmt ))
+                            if type == "provider" or type == "provisioner":
+                                apply_data = "not yet applied"
+                                plan_data = "no plan available"
+                                policy_data = "no policy available"
+                                cost_data = "no cost available"
+                                time_data = "no time estimation available"
+                                self.nodes.append(DotNode(d['node'], plan_data, apply_data,cost_data,policy_data,time_data,fmt=fmt ))
                             else:
                                 apply_data = None
                                 plan_data = None
@@ -129,12 +130,15 @@ class DotGraph(Graph):
                                     for i in range(len(self.cost.resource_cost_info)):
                                         currency = self.cost.resource_cost_info[i]["currency"]
                                         self.totalcost = str(self.cost.resource_cost_info[i]["totalcost"]) + " " +currency
-                                        for _, val in enumerate(self.cost.resource_cost_info[i]["Lineitem"]):  
-                                            data = val["terraformItemId"]+"."+val["id"]
-                                            if data == res:
-                                                val["lineitemtotal"] = str(val["lineitemtotal"]) + " "+ currency
-                                                cost_data = val
-                                                break
+                                        if self.cost.resource_cost_info[i]["Lineitem"] == "not available":
+                                            cost_data = "no cost available"
+                                        else:
+                                            for _, val in enumerate(self.cost.resource_cost_info[i]["Lineitem"]):  
+                                                data = val["terraformItemId"]+"."+val["id"]
+                                                if data == res:
+                                                    val["lineitemtotal"] = str(val["lineitemtotal"]) + " "+ currency
+                                                    cost_data = val
+                                                    break
                                 
                                 if ("not available" in self.time.resource_time_info):
                                     time_data = "no time estimation available"
@@ -142,7 +146,6 @@ class DotGraph(Graph):
                                 else:
                                     for i in range(len(self.time.resource_time_info)):
                                         self.totaltime = str(self.time.resource_time_info[i]["totalTimeEstimation"])
-
                                         for _, val in enumerate(self.time.resource_time_info[i]["resources"]):  
                                             data = val["name"]
                                             if data == res.split(".")[0]:
@@ -155,19 +158,19 @@ class DotGraph(Graph):
         # sometimes they're a side-effect of edge definitions. Capture them.
         for e in self.edges:
             if e.source not in [ n.label for n in self.nodes ]:
-                plan_data = {}
-                apply_data = {}
-                policy_data = {}
-                cost_data = {}
-                time_data = {}
+                apply_data = "not yet applied"
+                plan_data = "no plan available"
+                policy_data = "no policy available"
+                cost_data = "no cost available"
+                time_data = "no time estimation available"
                 self.nodes.append(DotNode(e.source, plan_data,apply_data,cost_data,policy_data,time_data))
             
             if e.target not in [ n.label for n in self.nodes ]:
-                plan_data = {}
-                apply_data = {}
-                policy_data = {}
-                cost_data = {}
-                time_data = {}
+                apply_data = "not yet applied"
+                plan_data = "no plan available"
+                policy_data = "no policy available"
+                cost_data = "no cost available"
+                time_data = "no time estimation available"
                 self.nodes.append(DotNode(e.target, plan_data,apply_data,cost_data,policy_data,time_data))
         
         self.stack('var')
@@ -471,7 +474,7 @@ class DotGraph(Graph):
                             {% if node.cost == "no cost available" %}
                                 <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/cost.png"/></TD><TD>{{ "%-30s"|format("&#62;_estimate cost") }}</TD><TD fixedsize="true" width="50" height="20">{{ "%-10s"|format("N/A") }}</TD></TR>
                             {% else %}
-                                <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/cost.png"/></TD><TD>{{ "%-30s"|format("&#62;_estimate cost") }}</TD><TD fixedsize="true" width="50" height="20">{{ "%-10s"|format(node.cost.lineitemtotal) }}</TD></TR>
+                                <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/cost.png"/></TD><TD>{{ "%-30s"|format("&#62;_estimate cost") }}</TD><TD fixedsize="true" width="50" height="20">{{ "%-10s"|format(node.cost.currlineitemtotal) }}</TD></TR>
                             {% endif %}
                             {% if node.time == "no time estimation available" %}
                                 <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/time.png"/></TD><TD>{{ "%-30s"|format("&#62;_estimate time") }}</TD><TD fixedsize="true" width="50" height="20"><IMG SRC= "static/images/hourglass.png"/></TD></TR>

@@ -42,7 +42,7 @@ For fastest way to get up and running with blast-radius is as follows:
    copy the blastradius/server/static folder to the terraform directory
    ```
    ```
-   easy_install blastradius-0.1.25.3-py3-none-any.whl
+   easy_install blastradius-0.1.25.4-py3-none-any.whl
    ```
 * Once installed just point Blast Radius at any initialized Terraform directory: 
    ```sh

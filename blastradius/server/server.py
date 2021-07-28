@@ -13,7 +13,6 @@ from flask import url_for
 
 import jinja2
 
-
 # 1st-party libraries
 from blastradius.handlers.dot import DotGraph, Format, DotNode
 from blastradius.handlers.terraform import Terraform
@@ -78,13 +77,17 @@ def simple_graph():
     file_contents=run_tf_graph()
     new_file_content = ''
     for line in file_contents.splitlines():
-        if re.search("var",line) or re.search("provider",line) or re.search("meta.count-boundary",line) or re.search("output",line):
+        if re.search("var",line) or re.search("provider",line) or re.search("meta.count-boundary",line) or re.search("output",line) :
             if re.search("meta.count-boundary",line) and not (re.search("output",line) or re.search("var",line) or re.search('\[root\] root',line)):
                 new_line = line.replace("meta.count-boundary (EachMode fixup)","root")
                 new_file_content+=new_line +'\n'
+            if re.search("provider.template",line):
+                    x = line.split('->')
+                    if x[0].find("[root] provider.template (close)") != -1 :
+                        new_line = line.replace("[root] provider.template (close)","[root] root")
+                        new_file_content+=new_line +'\n' 
         else:
             new_file_content+=line +'\n'
-    
     
     return new_file_content
 

@@ -21,6 +21,9 @@ class Cost():
             temp_data = dict()
             for (index, var) in data.items():
                 temp_data[index] = var
+                if (index == "Lineitem"):
+                    if var == None:
+                       temp_data[index] = "not available"       
 
             self.resource_cost_info.append(temp_data)
 

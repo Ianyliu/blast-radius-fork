@@ -165,10 +165,14 @@ blastradiusnew = function (selector, svg_url, json_url,br_state) {
             
             var render_plan = function(d) {
                 var plan_title = "plan info"
-                var yamlplan = json2yaml(d.plan)
                 var ttip = ''; 
                 ttip += title_html(d);
+                if (d.plan == "no plan available"){
+                    ttip += '<hr style="background-color:black"/><br><span class="title" style="background:' + color("#ffbf00") + ';">' + plan_title + '</span><br><br>'+(d.plan.length == 0 ? '' : "<p class='explain'>" +  JSON.stringify(d.plan, replacer, 2) + "</p><br>"+ '<hr style="background-color:black"/>') ;
+                } else {
+                var yamlplan = json2yaml(d.plan)
                 ttip += '<hr style="background-color:black"/><br><span class="title" style="background:' + color("#ffbf00") + ';">' + plan_title + '</span><br><br>'+(d.plan.length == 0 ? '' : "<p class='explain'>" + yamlplan + "</p><br>"+ '<hr style="background-color:black"/>') ;
+                }
                 ttip += child_html(d);
                 return ttip;
             }

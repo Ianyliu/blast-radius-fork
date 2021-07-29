@@ -468,8 +468,10 @@ class DotGraph(Graph):
                                 <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/plan.png"/></TD><TD>{{ "%-30s"|format("&#62;_terraform plan") }}</TD><TD fixedsize="true" width="50" height="20"><IMG SRC= "static/images/correct.png"/></TD></TR>
                             {% if node.policy == "no policy available" %}
                                 <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/policy.png"/></TD><TD>{{ "%-30s"|format("&#62;_controls verify") }} </TD><TD fixedsize="true" width="50" height="20"><IMG SRC= "static/images/hourglass.png"/></TD></TR>
-                            {% else %}
-                                <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/policy.png"/></TD><TD>{{ "%-30s"|format("&#62;_controls verify") }} </TD><TD fixedsize="true" width="50" height="20"></TD></TR>
+                            {% elif node.policy.decision == "pass" %}
+                                <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/policy.png"/></TD><TD>{{ "%-30s"|format("&#62;_controls verify") }} </TD><TD fixedsize="true" width="50" height="20"><IMG SRC= "static/images/correct.png"/></TD></TR>
+                            {% elif node.policy.decision == "fail" %}
+                                <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/policy.png"/></TD><TD>{{ "%-30s"|format("&#62;_controls verify") }} </TD><TD fixedsize="true" width="50" height="20"><IMG SRC= "static/images/correct.png"/></TD></TR>
                             {% endif %}
                             {% if node.cost == "no cost available" %}
                                 <TR><TD fixedsize="true" width="20" height="20"><IMG SRC= "static/images/cost.png"/></TD><TD>{{ "%-30s"|format("&#62;_estimate cost") }}</TD><TD fixedsize="true" width="50" height="20">{{ "%-10s"|format("N/A") }}</TD></TR>

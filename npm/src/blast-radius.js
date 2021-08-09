@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import d3Tip from 'd3-tip';
 import { resource_groups } from './categories';
 import { resource_types } from './resource-types';
+import { json2yaml } from './json2yaml';
 import svgPanZoom from 'svg-pan-zoom';
 import $ from 'jquery';
 import 'selectize';
@@ -962,7 +963,6 @@ var blastradius = function (selector, svg_url, json_url, br_state) {
                     // $(selector + '-search').selectize()[0].selectize.swapOnChange();
                 }
                 else {
-                    console.log("svg nodes in else here",svg_nodes);
                     $(".selectize-control").empty();
                     $(selector + '-search').selectize({
                         valueField: 'label',

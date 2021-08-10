@@ -3,12 +3,14 @@ h1, h2, h3, h4, p {
 }
 
 p.explain {
-  font-family: monospace;
+  font-family: Arial;
+  font-weight:400;
   white-space: pre;
 }
 
 h3.explain {
-  font-family: monospace;
+  font-family: Arial;
+  font-weight:400;
 }
 
 path.link {
@@ -24,7 +26,7 @@ circle {
 
 text {
   fill: #000;
-  font: 10px sans-serif;
+  font: 40px sans-serif;
   pointer-events: none;
 }
 
@@ -48,19 +50,20 @@ div.graph svg {
 }
 
 .diagmenu .dropdown-item {
-  font-family: 'courier new';
+  font-family: 'Arial';
   /*font-size: 14px;*/
 }
 
 .dropdown-menu div label {
-  font-family: 'courier new';
+  font-family: 'Arial';
+  font-weight: bold;
 }
 
 /* tooltip stuff */
 .d3-tip {
   line-height: 1.4;
-  font-weight: normal;
-  font-family: 'courier new', 'monaco', fixed-width;
+  font-weight: bold;
+  font-family: 'Arial', 'sans-serif', fixed-width;
   font-size: 14px;
   padding: 6px;
   background: rgba(0, 0, 0, 0.8);
@@ -72,9 +75,9 @@ div.graph svg {
 }
 
 .d3-tip p {
-  font-weight: normal;
+  font-weight: bold;
   line-height: 1.2;
-  font-family: 'courier new', 'monaco', fixed-width;
+  font-family: 'Arial', 'sans-serif', fixed-width;
   font-size: 11px;
 }
 
@@ -94,7 +97,8 @@ span.title {
 span.sbox-listing {
   display: inline-block;
   font-size: 12px;
-  font-family: "Courier New";
+  font-family: "Arial";
+  font-weight: 900;
   line-height: 18px;
   color: black;
   margin: 1px;
@@ -104,6 +108,7 @@ span.sbox-listing {
 span.dep {
       line-height: 15px;
       font-size: 12px;
+      font-weight: 900;
       color: white;
       display: inline-block;
       margin: 1px;
@@ -132,8 +137,9 @@ span.dep {
 }
 
 g.node text {
-        font-family: 'consolas', 'monaco', 'fixed-width';
+        font-family: 'Arial', 'sans-serif', 'fixed-width';
         font-size: 8px;
+        font-weight: 900;
 }
 
 .navbar-nav>li {
@@ -141,11 +147,12 @@ g.node text {
 }
 
 .navbar-brand {
-  font-family: 'courier new';
+  font-family: 'Arial';
+  font-weight: 900;
 }
 
 body {
-  font-family: "Lato", sans-serif;
+  font-family: "Arial", sans-serif;
 }
 .sidenav {
 height: 100%;

@@ -433,9 +433,9 @@ class DotGraph(Graph):
     dot_template_str_ext = """
     digraph {
     compound = "true"
-    graph [fontname = "courier new",fontsize=8];
-    node [fontname = "courier new",fontsize=8];
-    edge [fontname = "courier new",fontsize=8];
+    graph [fontname="Arial Black",fontsize=12];
+    node [fontname="Arial Black",fontsize=11];
+    edge [fontname=Helvetica,fontsize=10];
     
     {# just the root module #}
     {% for cluster in clusters %}

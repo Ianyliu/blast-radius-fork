@@ -44,13 +44,18 @@ For fastest way to get up and running with blast-radius is as follows:
    ```
    easy_install blastradius-0.1.25.4-py3-none-any.whl
    ```
+   or 
+   ```
+   pip3 blastradius-0.1.25.4-py3-none-any.whl
+   ```
+
 * Once installed just point Blast Radius at any initialized Terraform directory: 
    ```sh
    blast-radius --serve /path/to/terraform/directory
    ```
 * Go to the browser link http://127.0.0.1:5000/ to view the Blast Radius diagram for the terraform file.
    
-   ![BlastRadius](doc/blastradiusextdemo.png)
+   ![BlastRadius](doc/blastradiusext.png)
 
 * Enrich the Blast Radius diagrams with the outcome of Terraform plan & apply actions:   
    ```
@@ -63,12 +68,12 @@ For fastest way to get up and running with blast-radius is as follows:
    ```sh
    blast-radius --serve /path/to/terraform/directory
    ```
-* Go to the browser link http://127.0.0.1:5000/ to view the Blast Radius diagram, use the tooltip  `Blast-radius-extended` to view the enrichments.
+* Go to the browser link http://127.0.0.1:5000/ to view the Blast Radius extended diagram
    
-   The enrichments include - information from the Plan file & State file. 
+   The enrichments include - information from the Plan file, State file , cost file and time file . 
    Click the columns adjacent to the Resource Names to view these enrichment in the side panel view.
 
-   ![BlastRadiusExt](doc/blastradiusextinfo.png)
+   ![BlastRadiusExt](doc/blast-radius-ext.png)
 
 ---
 

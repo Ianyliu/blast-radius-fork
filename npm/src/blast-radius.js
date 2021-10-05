@@ -136,7 +136,7 @@ var blastradius = function (selector, svg_url, json_url, br_state) {
     // color assignments (resource_type : rgb) are stateful. If we use a new palette
     // every time the a subgraph is selected, the color assignments would differ and
     // become confusing.
-    var color = (state['color'] ? d3.scaleOrdinal(state['color']) : d3.scaleOrdinal(d3['schemeCategory20']));
+    var color = d3.scaleOrdinal(mycolors);
     var disableSvgZoom = state['disableSvgZoom'] ? state['disableSvgZoom'] : false;
     var disableTooltip = state['disableTooltip'] ? state['disableTooltip'] : false;
     var disableSvgHover = state['disableSvgHover'] ? state['disableSvgHover'] : false;
@@ -787,7 +787,7 @@ var blastradius = function (selector, svg_url, json_url, br_state) {
 
             // colorize nodes, and add mouse candy.
             if (!disableSvgHover) {
-                node
+                gnode
                     .on('mouseenter', node_mouseenter)
                     .on('mouseleave', node_mouseleave)
                     .on('mouseover', node_mouseover)

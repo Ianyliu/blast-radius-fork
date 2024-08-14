@@ -13,19 +13,21 @@ It is a work in progress and is not guaranteed to be bug free. Please feel free 
 ----------------------------------
 
 ## Table of Contents 
+- [Table of Contents](#table-of-contents)
 - [Usage](#usage)
-- [Preqrequisites](#prerequisites-for-local-use)
+- [Prerequisites for Local Use](#prerequisites-for-local-use)
 - [Local Quickstart](#local-quickstart)
 - [Docker Quickstart](#docker-quickstart)
 - [Kubernetes Quickstart](#kubernetes-quickstart)
   - [Kubernetes Prerequisites](#kubernetes-prerequisites)
-  - [Start App on Kubernetes](#start-the-app-on-kubernetes)
-  - [Kubernetes Debugging & Helpful Commands](#kubernetes-debugginghelpful-commands)
+  - [Start the App on Kubernetes](#start-the-app-on-kubernetes)
+  - [Kubernetes Debugging/Helpful Commands](#kubernetes-debugginghelpful-commands)
 - [Parameters](#parameters)
 - [Embedded Figures](#embedded-figures)
 - [How It Works](#how-it-works)
+- [Motivation](#motivation)
 - [What's Different](#whats-different)
-- [Future Implementation Possibilities](#future-implementations--possible-functionalities)
+- [Future Implementations \& Possible Functionalities](#future-implementations--possible-functionalities)
 - [Further Reading](#further-reading)
 - [Other Tools to Check Out](#other-tools-to-check-out)
 
@@ -91,6 +93,9 @@ And you will shortly be rewarded with a browser link http://127.0.0.1:5000/.
 
 [//]: # (```)
 
+
+Note: If you do not have an initialized Terraform directory but have the DOT script (the output of the `terraform graph` command, note that this is not the same as a JSON file or state graph). You can either copy and paste the DOT script into the text input field or uploaded the DOT script file.
+
 Other ways to run it include [Docker](#docker-quickstart) and [Kubernetes](#kubernetes-quickstart)
 
 ## Docker Quickstart
@@ -117,6 +122,8 @@ docker run --rm -it -p 5000:5000 `
   --cap-add=SYS_ADMIN `
   ianyliu/blast-radius-fork
 ```
+
+Note: If you have spaces in your directory then you may have to change `-v ${pwd}:/data:ro` to `-v "${pwd}:/data:ro"` instead.
 
 A slightly more customized variant of this is also available as an example
 [docker-compose.yml](./Docker/docker-compose.yml) usecase for Workspaces.
@@ -366,3 +373,14 @@ It would greatly help if you could contribute to bringing all of these forks int
     * Docker compatible
   * Cons
     * Requires Terraform directory to be init, or else it will not work (even in Docker it also needs init)
+
+
+## Star History
+
+<a href="https://star-history.com/#ianyliu/blast-radius-fork&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ianyliu/blast-radius-fork&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ianyliu/blast-radius-fork&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ianyliu/blast-radius-fork&type=Date" />
+ </picture>
+</a>

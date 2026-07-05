@@ -1,14 +1,17 @@
 #!/bin/sh
 set -e
 
-# If command starts with an option, prepend the blast-radius.
-if [ "${1}" != "blast-radius" ]; then
+# If command starts with an option, prepend blast-radius so Docker users can run
+# `docker run image --serve ...` as shorthand.
+if [ "${1#-}" != "${1}" ]; then
+  set -- blast-radius "$@"
+elif [ "${1}" != "blast-radius" ]; then
   if [ -n "${1}" ]; then
     set -- blast-radius "$@"
   fi
 fi
 
-# Assert CLI args are overwritten, otherwise set them to preferred defaults
+# Assert CLI args are overwritten, otherwise set them to preferred defaults.
 export TF_CLI_ARGS_get=${TF_CLI_ARGS_get:-'-update'}
 export TF_CLI_ARGS_init=${TF_CLI_ARGS_init:-'-input=false'}
 
@@ -29,17 +32,17 @@ cd /data-rw
 # Is Terraform already initialized? Ensure modules are all downloaded.
 [ -d '.terraform' ] && terraform get
 
-# Reinitialize for some reason
+# Initialize Terraform with the version embedded in this Docker image.
 if [ -n "$CHDIR" ] && [ -d "$CHDIR" ]; then
-  terraform -chdir="$CHDIR" init
   echo "Initializing Terraform in directory: $CHDIR"
+  terraform -chdir="$CHDIR" init
 else
+  echo "Initializing Terraform in directory: /data-rw"
   terraform init
 fi
 
 # it's possible that we're in a sub-directory. leave.
 cd /data-rw
-cat /output.txt
 
 # Let's go!
 exec "$@"

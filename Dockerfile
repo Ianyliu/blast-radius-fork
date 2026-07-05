@@ -1,5 +1,5 @@
 ARG TF_VERSION=1.15.7
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.10
 
 FROM hashicorp/terraform:${TF_VERSION} AS terraform
 

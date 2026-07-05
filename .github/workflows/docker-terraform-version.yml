@@ -1,0 +1,75 @@
+name: Docker Terraform version smoke test
+
+on:
+  push:
+    branches:
+      - main
+      - fix/issue-39-terraform-version
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  docker-smoke:
+    name: Terraform ${{ matrix.terraform_version }} Docker smoke
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform_version:
+          - 1.10.5
+          - 1.15.7
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg TF_VERSION=${{ matrix.terraform_version }} \
+            --build-arg PYTHON_VERSION=3.12 \
+            -t blast-radius-fork:${{ matrix.terraform_version }} \
+            .
+
+      - name: Verify embedded Terraform version
+        run: |
+          docker run --rm --entrypoint terraform \
+            blast-radius-fork:${{ matrix.terraform_version }} version | tee terraform-version.txt
+          grep "Terraform v${{ matrix.terraform_version }}" terraform-version.txt
+
+      - name: Create minimal Terraform project
+        run: |
+          mkdir -p /tmp/blast-radius-tf-smoke
+          cat > /tmp/blast-radius-tf-smoke/main.tf <<'EOF'
+          terraform {
+            required_version = ">= 1.0.0"
+          }
+
+          resource "terraform_data" "example" {
+            input = "blast-radius"
+          }
+          EOF
+
+      - name: Run Blast Radius container long enough to initialize and serve
+        run: |
+          set +e
+          timeout 30s docker run --rm \
+            -p 5001:5000 \
+            -v /tmp/blast-radius-tf-smoke:/data:ro \
+            --security-opt apparmor:unconfined \
+            --cap-add=SYS_ADMIN \
+            blast-radius-fork:${{ matrix.terraform_version }} \
+            > blast-radius.log 2>&1
+          status=$?
+          set -e
+
+          cat blast-radius.log
+          if [ "$status" -ne 124 ]; then
+            echo "Expected the server to keep running until timeout; got exit status $status"
+            exit 1
+          fi
+
+          grep "Terraform has been successfully initialized" blast-radius.log
+          grep "Running on" blast-radius.log

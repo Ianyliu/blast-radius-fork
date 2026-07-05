@@ -13,7 +13,7 @@ To build an image with a different Terraform version, pass `TF_VERSION` explicit
 ```sh
 docker build \
   --build-arg TF_VERSION=1.10.5 \
-  --build-arg PYTHON_VERSION=3.12 \
+  --build-arg PYTHON_VERSION=3.10 \
   -t blast-radius-fork:1.10.5 \
   .
 ```

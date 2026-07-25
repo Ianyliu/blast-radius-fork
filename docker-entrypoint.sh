@@ -1,14 +1,9 @@
 #!/bin/sh
 set -e
 
-# If command starts with an option, prepend blast-radius so Docker users can run
-# `docker run image --serve ...` as shorthand.
-if [ "${1#-}" != "${1}" ]; then
+# Preserve the existing Docker shorthand for commands such as `--serve`.
+if [ -n "${1}" ] && [ "${1}" != "blast-radius" ]; then
   set -- blast-radius "$@"
-elif [ "${1}" != "blast-radius" ]; then
-  if [ -n "${1}" ]; then
-    set -- blast-radius "$@"
-  fi
 fi
 
 # Assert CLI args are overwritten, otherwise set them to preferred defaults.

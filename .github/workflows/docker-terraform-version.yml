@@ -4,47 +4,68 @@ on:
   push:
     branches:
       - main
-      - fix/issue-39-terraform-version
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   docker-smoke:
-    name: Terraform ${{ matrix.terraform_version }} Docker smoke
+    name: ${{ matrix.scenario }} Terraform ${{ matrix.terraform_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        terraform_version:
-          - 1.10.5
-          - 1.15.7
+        include:
+          - scenario: default
+            terraform_version: "1.15.8"
+            required_version: ">= 1.7.5"
+            override_default: false
+          - scenario: issue-39-override
+            terraform_version: "1.7.5"
+            required_version: "= 1.7.5"
+            override_default: true
+
+    env:
+      IMAGE_TAG: blast-radius-fork:${{ matrix.scenario }}
+      EXPECTED_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
+      REQUIRED_TERRAFORM_VERSION: ${{ matrix.required_version }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Docker image
         run: |
-          docker build \
-            --build-arg TF_VERSION=${{ matrix.terraform_version }} \
+          build_args=()
+          if [[ "${{ matrix.override_default }}" == "true" ]]; then
+            build_args+=(--build-arg "TF_VERSION=${EXPECTED_TERRAFORM_VERSION}")
+          fi
+
+          docker build "${build_args[@]}" \
             --build-arg PYTHON_VERSION=3.10 \
-            -t blast-radius-fork:${{ matrix.terraform_version }} \
+            -t "${IMAGE_TAG}" \
             .
 
       - name: Verify embedded Terraform version
         run: |
           docker run --rm --entrypoint terraform \
-            blast-radius-fork:${{ matrix.terraform_version }} version | tee terraform-version.txt
-          grep "Terraform v${{ matrix.terraform_version }}" terraform-version.txt
+            "${IMAGE_TAG}" version | tee terraform-version.txt
+          grep -F "Terraform v${EXPECTED_TERRAFORM_VERSION}" terraform-version.txt
+
+          docker run --rm --entrypoint /bin/sh "${IMAGE_TAG}" \
+            -c 'printf "%s\n" "$BLAST_RADIUS_TERRAFORM_VERSION"' |
+            grep -Fx "${EXPECTED_TERRAFORM_VERSION}"
 
       - name: Create minimal Terraform project
         run: |
           mkdir -p /tmp/blast-radius-tf-smoke
-          cat > /tmp/blast-radius-tf-smoke/main.tf <<'EOF'
+          cat > /tmp/blast-radius-tf-smoke/main.tf <<EOF
           terraform {
-            required_version = ">= 1.0.0"
+            required_version = "${REQUIRED_TERRAFORM_VERSION}"
           }
 
           resource "terraform_data" "example" {
@@ -67,7 +88,7 @@ jobs:
             -v /tmp/blast-radius-tf-smoke:/data:ro \
             --security-opt apparmor:unconfined \
             --cap-add=SYS_ADMIN \
-            blast-radius-fork:${{ matrix.terraform_version }}
+            "${IMAGE_TAG}"
 
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:5001/ >/tmp/blast-radius-index.html; then

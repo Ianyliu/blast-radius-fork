@@ -135,6 +135,11 @@ $ docker run --rm -it -p 5000:5000 \
 ## Image Building
 
 If you'd like to build your own Docker image after making changes to Blast Radius, you can build it in 2 ways:
+
+The default image includes Terraform 1.15.8. See
+[Docker Terraform versions](docs/docker-terraform-versions.md) to select and
+verify a different embedded Terraform version.
+
 1. Normal Build
 
 To execute a normal build, navigate (using commands like `cd`) to the root of your modified Blast Radius project in your terminal. 

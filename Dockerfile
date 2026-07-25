@@ -1,4 +1,4 @@
-ARG TF_VERSION=1.15.7
+ARG TF_VERSION=1.15.8
 ARG PYTHON_VERSION=3.10
 
 FROM hashicorp/terraform:${TF_VERSION} AS terraform
@@ -9,7 +9,8 @@ ARG PYTHON_VERSION
 
 LABEL org.opencontainers.image.title="blast-radius-fork" \
       org.opencontainers.image.description="Interactive Terraform graph visualizer" \
-      org.opencontainers.image.source="https://github.com/Ianyliu/blast-radius-fork"
+      org.opencontainers.image.source="https://github.com/Ianyliu/blast-radius-fork" \
+      org.opencontainers.image.version="${TF_VERSION}"
 
 ENV BLAST_RADIUS_TERRAFORM_VERSION=${TF_VERSION}
 

@@ -75,6 +75,11 @@ specifically `--cap-add=SYS_ADMIN`.
 
 > Note: This is considered a security risk by some, so be sure you understand how this works. 
 
+Initialization is cache-aware and configurable through
+`BLAST_RADIUS_TERRAFORM_INIT=auto|always|never`. See
+[Docker Terraform initialization](docs/docker-initialization.md) before
+reusing private modules or provider caches created on another platform.
+
 For more information on how this works and what it means for your host, check
 out the [runtime privileges][privileges] documentation.
 </details>

@@ -134,7 +134,13 @@ Note: If you have spaces in your directory then you may have to change `-v ${pwd
 A slightly more customized variant of this is also available as an example
 [docker-compose.yml](./Docker/docker-compose.yml) usecase for Workspaces.
 
-For more details on Docker usage, see [Docker.md](Docker.md)
+Terraform initialization defaults to a cache-aware `auto` mode. Use
+`BLAST_RADIUS_TERRAFORM_INIT=always` to force initialization or `never` to
+reuse a prepared project without any initialization attempt. See
+[Docker Terraform initialization](docs/docker-initialization.md) for cache,
+`CHDIR`, `TF_DATA_DIR`, private-module, and provider-platform details.
+
+For more details on Docker usage, see [Docker.md](Docker.md).
 
 ## Kubernetes Quickstart
 

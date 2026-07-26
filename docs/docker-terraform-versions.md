@@ -2,6 +2,9 @@
 
 Blast Radius Fork bundles a Terraform binary into the Docker image so that the container can run `terraform init` and `terraform graph` without depending on the host machine's Terraform installation.
 
+Container startup uses the cache-aware initialization policy documented in
+[Docker Terraform initialization](docker-initialization.md).
+
 The default Dockerfile build currently pins Terraform to `1.15.8`:
 
 ```sh

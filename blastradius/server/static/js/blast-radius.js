@@ -28,35 +28,81 @@ build_uri = function (url, params) {
     return url.slice(0, -1);
 }
 
-let uploadRequest = (url, formData, selector) => {
+let showGraphMessage = (selector, message, level = "danger") => {
+    let container = document.querySelector(selector);
+    if (!container) {
+        return;
+    }
 
-    fetch(url, {
-        method: "POST",
-        body: formData
-    })
-        .then(response => (response.json()))
-        .then(async function (resjson) {
-            let br_state = {
-                selector: {}
-            }
+    let existing = container.querySelector(".blast-radius-message");
+    if (existing) {
+        existing.remove();
+    }
 
-            xml = $.parseXML(resjson.SVG);
-            json = JSON.parse(resjson.JSON);
-            await blastradius(selector, '/graph.svg', '/graph.json', br_state, xml, json)
-        });
+    let notice = document.createElement("div");
+    notice.className = `alert alert-${level} blast-radius-message`;
+    notice.setAttribute("role", "alert");
+    notice.textContent = message;
+    container.prepend(notice);
 }
 
-let uploadFile = function (file, tabNumber) {
-    let fileType = file.type;
-    let selector = "#graph-" + tabNumber;
-    let validExtensions = ["text/plain"];
-    if (validExtensions.includes(fileType)) {
-        let formData = new FormData();
-        formData.set('file', file);
-        uploadRequest('/upload', formData, selector)
-    } else {
-        alert("This is not a valid File!");
+let clearGraphMessage = (selector) => {
+    let existing = document.querySelector(`${selector} .blast-radius-message`);
+    if (existing) {
+        existing.remove();
     }
+}
+
+let renderDotSource = async (dot, selector) => {
+    try {
+        let response = await fetch("/api/graphs/render", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({dot: dot})
+        });
+        let payload = await response.json();
+
+        if (!response.ok) {
+            let message = payload.error && payload.error.message
+                ? payload.error.message
+                : "The graph could not be rendered.";
+            throw new Error(message);
+        }
+
+        let xml = new DOMParser().parseFromString(payload.svg, "image/svg+xml");
+        if (xml.querySelector("parsererror")) {
+            throw new Error("Graphviz returned an invalid SVG document.");
+        }
+
+        clearGraphMessage(selector);
+        let br_state = {};
+        await blastradius(
+            selector,
+            "/graph.svg",
+            "/graph.json",
+            br_state,
+            xml,
+            payload.graph
+        );
+
+        if (payload.warnings.length > 0) {
+            showGraphMessage(selector, payload.warnings.join(" "), "warning");
+        }
+    } catch (error) {
+        showGraphMessage(selector, error.message);
+    }
+}
+
+let uploadFile = async function (file, tabNumber) {
+    let selector = "#graph-" + tabNumber;
+    if (!file) {
+        showGraphMessage(selector, "Choose a Graphviz DOT file to upload.");
+        return;
+    }
+
+    await renderDotSource(await file.text(), selector);
 }
 
 let inputGraph = async () => {
@@ -71,10 +117,7 @@ let inputGraph = async () => {
             await insertTabContent(prevNumber)
             await createTab(`input-graph${curNumber}`, curNumber);
 
-            let formData = new FormData();
-            formData.set('input', graphinput);
-
-            await uploadRequest('/input', formData, selector);
+            await renderDotSource(graphinput, selector);
 
             $('#tablink-' + curNumber).click();
         } else {
@@ -82,7 +125,13 @@ let inputGraph = async () => {
         }
 
     } else {
-        alert("Invalid graph input or empty input!")
+        let lastTabContent = $("div.tabcontent").last()[0];
+        if (lastTabContent) {
+            showGraphMessage(
+                `#${lastTabContent.id} .graph`,
+                "Paste a non-empty Graphviz DOT document."
+            );
+        }
     }
 }
 /**
@@ -328,6 +377,10 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
         if (uploadXML != null) {
             xml = uploadXML;
         }
+        if (error && uploadXML == null) {
+            showGraphMessage(selector, "The graph SVG could not be loaded.");
+            return;
+        }
 
         container.node()
             .appendChild(document.importNode(xml.documentElement, true));
@@ -358,9 +411,10 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
                 data = uploadJSON
             }
 
-            if (error) {
+            if (error && uploadJSON === null) {
                 console.error("No Terraform files were found, so JSON details will not be available. The graph is still usable but without all features enabled such as filtering content");
-                // alert("No Terraform files were found, so JSON details will not be available. The graph is still usable but without all features enabled such as filtering content");
+                showGraphMessage(selector, "The graph details could not be loaded.");
+                return;
             }
 
             // if (!error) {
@@ -729,29 +783,25 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
             if (nodes) {
                 var root = nodes['[root] root'];
 
-                if (root == undefined) {
-                    if (confirm("Invalid graph detected! Would you like to reload the page?") === true) {
-                        window.location.reload()
-                    }
-                }
-
-                svg.selectAll('g.node#' + root.svg_id)
-                    .data(svg_nodes, function (d) {
-                        return (d && d.svg_id) || d3.select(this).attr("id");
-                    })
-                    .on('mouseover', node_mouseover)
-                    .on('mouseout', node_mouseout)
-                    .on('mousedown', node_mousedown)
-                    .select('polygon')
-                    .attr('fill', function (d) {
-                        return color(d.group);
-                    })
-                    .style('fill', (function (d) {
-                        if (d)
+                if (root) {
+                    svg.selectAll('g.node#' + root.svg_id)
+                        .data(svg_nodes, function (d) {
+                            return (d && d.svg_id) || d3.select(this).attr("id");
+                        })
+                        .on('mouseover', node_mouseover)
+                        .on('mouseout', node_mouseout)
+                        .on('mousedown', node_mousedown)
+                        .select('polygon')
+                        .attr('fill', function (d) {
                             return color(d.group);
-                        else
-                            return '#000';
-                    }));
+                        })
+                        .style('fill', (function (d) {
+                            if (d)
+                                return color(d.group);
+                            else
+                                return '#000';
+                        }));
+                }
             } else {
                 console.warn("Mouse events and coloration may not work due to nodes being undefined.")
             }

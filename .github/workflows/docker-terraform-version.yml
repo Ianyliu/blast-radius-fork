@@ -38,6 +38,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Test Terraform initialization policy
+        run: python -m unittest tests/test_docker_init.py -v
+
       - name: Build Docker image
         run: |
           build_args=()

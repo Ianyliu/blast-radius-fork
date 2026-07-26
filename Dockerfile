@@ -19,7 +19,8 @@ RUN apk add --no-cache graphviz ttf-freefont git \
 
 COPY --from=terraform /bin/terraform /bin/terraform
 COPY ./docker-entrypoint.sh /bin/docker-entrypoint.sh
-RUN chmod +x /bin/docker-entrypoint.sh \
+COPY ./docker-terraform-init.sh /bin/docker-terraform-init.sh
+RUN chmod +x /bin/docker-entrypoint.sh /bin/docker-terraform-init.sh \
     && terraform version \
     && dot -V
 

@@ -21,6 +21,7 @@ from blastradius.util import which
 from blastradius.graph import Node, Edge, Counter, Graph
 
 app = Flask(__name__)
+MAX_DOT_BYTES = 2 * 1024 * 1024
 
 
 @app.route('/')
@@ -60,8 +61,11 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
-        flash('No file submitted')
-        return redirect("/")
+        return graph_error(
+            400,
+            'missing_dot',
+            'Submit a Graphviz DOT file in the "file" field.',
+        )
     file = request.files['file']
 
     filecontent = file.read().decode("utf-8")
@@ -69,8 +73,14 @@ def upload():
     module_depth = request.args.get('module_depth', default=None, type=int)
     refocus = request.args.get('refocus', default=None, type=str)
 
-    dot = initalizeDotGraph(content=filecontent,
-                            module_depth=module_depth, refocus=refocus)
+    try:
+        dot, _warnings = render_dot_graph(
+            content=filecontent,
+            module_depth=module_depth,
+            refocus=refocus,
+        )
+    except ValueError as error:
+        return graph_error(422, 'invalid_graph', str(error))
 
     resp = {"SVG": dot.svg(), "JSON": dot.json()}
     return jsonify(resp)
@@ -79,18 +89,105 @@ def upload():
 @app.route('/input', methods=['POST'])
 def input():
     if 'input' not in request.form:
-        flash('No input submitted')
-        return redirect("/")
+        return graph_error(
+            400,
+            'missing_dot',
+            'Submit Graphviz DOT text in the "input" field.',
+        )
     dot_input = request.form['input']
 
     module_depth = request.args.get('module_depth', default=None, type=int)
     refocus = request.args.get('refocus', default=None, type=str)
 
-    dot = initalizeDotGraph(content=dot_input,
-                            module_depth=module_depth, refocus=refocus)
+    try:
+        dot, _warnings = render_dot_graph(
+            content=dot_input,
+            module_depth=module_depth,
+            refocus=refocus,
+        )
+    except ValueError as error:
+        return graph_error(422, 'invalid_graph', str(error))
 
     resp = {"SVG": dot.svg(), "JSON": dot.json()}
     return jsonify(resp)
+
+
+@app.route('/api/graphs/render', methods=['POST'])
+def render_graph():
+    if request.content_length and request.content_length > MAX_DOT_BYTES:
+        return graph_error(
+            413,
+            'payload_too_large',
+            'The DOT document exceeds the 2 MiB request limit.',
+        )
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return graph_error(
+            400,
+            'invalid_request',
+            'Send a JSON object containing a "dot" string.',
+        )
+
+    dot_input = payload.get('dot')
+    if not isinstance(dot_input, str) or not dot_input.strip():
+        return graph_error(
+            400,
+            'missing_dot',
+            'The "dot" field must be a non-empty string.',
+        )
+    if len(dot_input.encode('utf-8')) > MAX_DOT_BYTES:
+        return graph_error(
+            413,
+            'payload_too_large',
+            'The DOT document exceeds the 2 MiB request limit.',
+        )
+
+    module_depth = payload.get('module_depth')
+    if (
+        module_depth is not None
+        and (
+            isinstance(module_depth, bool)
+            or not isinstance(module_depth, int)
+            or module_depth < 0
+        )
+    ):
+        return graph_error(
+            400,
+            'invalid_module_depth',
+            '"module_depth" must be a non-negative integer.',
+        )
+
+    refocus = payload.get('refocus')
+    if refocus is not None and not isinstance(refocus, str):
+        return graph_error(
+            400,
+            'invalid_refocus',
+            '"refocus" must be a node label string.',
+        )
+
+    Graph.reset_counters()
+    try:
+        dot, warnings = render_dot_graph(
+            content=dot_input,
+            module_depth=module_depth,
+            refocus=refocus,
+        )
+        svg = dot.svg()
+    except (OSError, RuntimeError, ValueError) as error:
+        return graph_error(422, 'invalid_graph', str(error))
+
+    return jsonify(
+        {
+            'svg': svg,
+            'graph': json.loads(dot.json()),
+            'warnings': warnings,
+        }
+    )
+
+
+def graph_error(status, code, message):
+    return jsonify({'error': {'code': code, 'message': message}}), status
 
 
 # @app.route('/convert/<filetype>', methods=['POST'])
@@ -204,23 +301,44 @@ def run_tf_graph():
     return completed.stdout.decode('utf-8')
 
 
-def initalizeDotGraph(content, module_depth, refocus):
+def render_dot_graph(content, module_depth=None, refocus=None):
     dot = DotGraph('', file_contents=content)
-
-    # module_depth = request.args.get('module_depth', default=None, type=int)
-    # refocus      = request.args.get('refocus', default=None, type=str)
+    if not dot.nodes and not dot.edges:
+        raise ValueError(
+            'No Graphviz node or edge declarations were found in the DOT document.'
+        )
 
     if module_depth is not None and module_depth >= 0:
         dot.set_module_depth(module_depth)
 
-    tf = Terraform(os.getcwd())
-    for node in dot.nodes:
-        node.definition = tf.get_def(node)
+    warnings = []
+    try:
+        tf = Terraform(os.getcwd())
+        for node in dot.nodes:
+            node.definition = tf.get_def(node)
+    except (OSError, RuntimeError) as error:
+        warnings.append(
+            'Terraform definitions were unavailable: {}'.format(error)
+        )
 
     if refocus is not None:
         node = dot.get_node_by_name(refocus)
         if node:
             dot.center(node)
+        else:
+            warnings.append(
+                'The requested refocus node was not found; the full graph was rendered.'
+            )
+
+    return dot, warnings
+
+
+def initalizeDotGraph(content, module_depth=None, refocus=None):
+    dot, _warnings = render_dot_graph(
+        content=content,
+        module_depth=module_depth,
+        refocus=refocus,
+    )
 
     return dot
 

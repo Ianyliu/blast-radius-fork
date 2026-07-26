@@ -244,31 +244,33 @@ class DotGraph(Graph):
                 edges_by_target[e.target] = [ e ]
 
         edges_to_save = OrderedSet() # edge objects
-        nodes_to_save = OrderedSet() # label strings
+        nodes_to_save = OrderedSet([node.label]) # label strings
 
-        q = deque()
-        if node.label in edges_by_source:
-            q.append(node.label)
-            nodes_to_save.add(node.label)
-            while len(q) > 0:
-                source = q.pop()
-                if source in edges_by_source:
-                    for e in edges_by_source[source]:
-                        q.append(e.target)
-                        edges_to_save.add(e)
-                        nodes_to_save.add(e.target)
+        q = deque([node.label])
+        visited = set()
+        while q:
+            source = q.popleft()
+            if source in visited:
+                continue
+            visited.add(source)
+            for e in edges_by_source.get(source, []):
+                edges_to_save.add(e)
+                nodes_to_save.add(e.target)
+                if e.target not in visited:
+                    q.append(e.target)
 
-        q = deque()
-        if node.label in edges_by_target:
-            q.append(node.label)
-            nodes_to_save.add(node.label)
-            while len(q) > 0:
-                target = q.pop()
-                if target in edges_by_target:
-                    for e in edges_by_target[target]:
-                        q.append(e.source)
-                        edges_to_save.add(e)
-                        nodes_to_save.add(e.source)
+        q = deque([node.label])
+        visited = set()
+        while q:
+            target = q.popleft()
+            if target in visited:
+                continue
+            visited.add(target)
+            for e in edges_by_target.get(target, []):
+                edges_to_save.add(e)
+                nodes_to_save.add(e.source)
+                if e.source not in visited:
+                    q.append(e.source)
 
         self.edges = list(edges_to_save)
         self.nodes = [ n for n in self.nodes if n.label in nodes_to_save ]
@@ -285,19 +287,20 @@ class DotGraph(Graph):
                 edges_by_source[e.source] = [ e ]
 
         edges_to_save = OrderedSet() # edge objects
-        nodes_to_save = OrderedSet() # label strings
+        nodes_to_save = OrderedSet([node.label]) # label strings
 
-        q = deque()
-        if node.label in edges_by_source:
-            q.append(node.label)
-            nodes_to_save.add(node.label)
-            while len(q) > 0:
-                source = q.pop()
-                if source in edges_by_source:
-                    for e in edges_by_source[source]:
-                        q.append(e.target)
-                        edges_to_save.add(e)
-                        nodes_to_save.add(e.target)
+        q = deque([node.label])
+        visited = set()
+        while q:
+            source = q.popleft()
+            if source in visited:
+                continue
+            visited.add(source)
+            for e in edges_by_source.get(source, []):
+                edges_to_save.add(e)
+                nodes_to_save.add(e.target)
+                if e.target not in visited:
+                    q.append(e.target)
 
         self.edges = list(edges_to_save)
         self.nodes = [ n for n in self.nodes if n.label in nodes_to_save ]
@@ -521,4 +524,3 @@ class DotEdge(Edge):
     def __iter__(self):
         for key in {'source', 'target', 'svg_id', 'edge_type'}: 
             yield (key, getattr(self, key))
-

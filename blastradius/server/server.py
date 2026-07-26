@@ -8,6 +8,7 @@ import glob
 import subprocess
 import itertools
 import json
+import platform
 
 # 3rd-party libraries
 from flask import Flask, render_template, request, flash, redirect, jsonify, send_file
@@ -230,33 +231,38 @@ def removeExistingFiles():
 
 
 def get_help():
-    return {'tf_version': get_terraform_version(),
-            'tf_exe': get_terraform_exe(),
+    terraform_executable = get_terraform_exe()
+    return {'tf_version': get_terraform_version(terraform_executable),
+            'tf_exe': terraform_executable or 'Not installed',
             'cwd': os.getcwd(),
             'python_version': get_python_version()}
 
 
-def get_terraform_version():
-    completed = subprocess.run(
-        ['terraform', '--version'], stdout=subprocess.PIPE)
+def get_terraform_version(executable=None):
+    if executable is None:
+        return 'Not installed'
+
+    try:
+        completed = subprocess.run(
+            [executable, '--version'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError:
+        return 'Unavailable'
+
     if completed.returncode != 0:
-        raise
-    return completed.stdout.decode('utf-8').splitlines()[0].split(' ')[-1]
+        return 'Unavailable'
+
+    lines = completed.stdout.decode('utf-8', errors='replace').splitlines()
+    if not lines:
+        return 'Unavailable'
+    return lines[0].split(' ')[-1]
 
 
 def get_terraform_exe():
-    return which('terraform')
+    return which('terraform') or which('terraform.exe')
 
 
 def get_python_version():
-
-    completed = subprocess.run(
-        ['python3', '--version'], stdout=subprocess.PIPE)
-
-    if completed.returncode != 0:
-        print("'python3' was not found, trying again with 'python' ... ")
-        completed2 = subprocess.run(
-            ['python', '--version'], stdout=subprocess.PIPE)
-        if completed2.returncode != 0:
-            raise
-    return completed.stdout.decode('utf-8').splitlines()[0].split(' ')[-1]
+    return platform.python_version()

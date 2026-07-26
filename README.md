@@ -187,8 +187,11 @@ Any valid localhost port is allowed.
 * `--dot`: Returns a string consisting of Graphviz DOT script of graph. (no colors)
 * `--svg`: Prints SVG representation of graph (with colors).
 * `--graph`: 
-* `--module-depth`: Takes an integer as input and only eliminates display of deeply nested modules. 
-This will not show every node on the graph unless the user specifies a depth larger than the graph.
+* `--module-depth`: Takes a non-negative integer and collapses resources below
+  that module depth. A depth of `0` collapses each top-level module into one
+  node; a depth of `1` keeps top-level module resources visible and collapses
+  nested modules.
+  * Example: ```terraform graph | blast-radius --module-depth 1 --svg > graph.svg```
 *  `--focus`: Show only specified resource and its dependencies. Not available in web app. Only works with `--json` and `--svg`.
   * Example: ```terraform graph | blast-radius --focus \
     "[root] module.us-west-2.module.secondary_subnet.data.aws_vpc.target" --svg```

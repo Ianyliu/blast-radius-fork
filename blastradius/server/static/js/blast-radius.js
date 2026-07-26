@@ -12,6 +12,10 @@ const edge_types = {
     LAYOUT_HIDDEN: 4, // these edges are not drawn, aren't "real" edges, but inform layout.
 }
 
+// Each interactive tab owns its source, render options, and presentation state.
+// Pasted and uploaded graphs must always be re-rendered from this original DOT.
+const graphSources = new Map();
+
 // Sometimes we have escaped newlines (\n) in json strings. we want <br> instead.
 // FIXME: much better line wrapping is probably possible.
 var replacer = function (key, value) {
@@ -53,14 +57,30 @@ let clearGraphMessage = (selector) => {
     }
 }
 
-let renderDotSource = async (dot, selector) => {
+let renderDotSource = async (dot, selector, options = {}, beforeReplace = null) => {
     try {
+        let previousSource = graphSources.get(selector);
+        let renderOptions = Object.assign(
+            {},
+            previousSource && previousSource.type === "dot"
+                ? previousSource.options
+                : {},
+            options
+        );
+        let requestBody = {dot: dot};
+        if (renderOptions.module_depth !== undefined) {
+            requestBody.module_depth = renderOptions.module_depth;
+        }
+        if (renderOptions.refocus !== undefined) {
+            requestBody.refocus = renderOptions.refocus;
+        }
+
         let response = await fetch("/api/graphs/render", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({dot: dot})
+            body: JSON.stringify(requestBody)
         });
         let payload = await response.json();
 
@@ -76,12 +96,28 @@ let renderDotSource = async (dot, selector) => {
             throw new Error("Graphviz returned an invalid SVG document.");
         }
 
+        let br_state = previousSource && previousSource.type === "dot"
+            ? previousSource.br_state
+            : {};
+        graphSources.set(selector, {
+            type: "dot",
+            dot: dot,
+            options: renderOptions,
+            br_state: br_state
+        });
+
+        if (beforeReplace) {
+            beforeReplace();
+        }
+        let previousSvg = document.querySelector(`${selector} svg`);
+        if (previousSvg) {
+            previousSvg.remove();
+        }
         clearGraphMessage(selector);
-        let br_state = {};
         await blastradius(
             selector,
-            "/graph.svg",
-            "/graph.json",
+            null,
+            null,
             br_state,
             xml,
             payload.graph
@@ -208,6 +244,7 @@ let displayTabContent = (tabNumber, color) => {
  */
 let closeTab = (tabNumber) => {
 
+    graphSources.delete(`#graph-${tabNumber}`);
     $(`#tab-${tabNumber}`).remove();
     $(`#nav-item-${tabNumber}`).remove();
     $(`.graph-${tabNumber}-d3-tip`).remove();
@@ -362,6 +399,15 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
 
     var state = br_state[selector];
     var container = d3.select(selector);
+    if (!graphSources.has(selector)) {
+        graphSources.set(selector, {
+            type: "terraform",
+            svg_url: svg_url,
+            json_url: json_url,
+            options: state.params || {},
+            br_state: br_state
+        });
+    }
 
     // color assignments (resource_type : rgb) are stateful. If we use a new palette
     // every time the a subgraph is selected, the color assignments would differ and
@@ -372,11 +418,7 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
     // 1st pull down the svg, and append it to the DOM as a child
     // of our selector. If added as <img src="x.svg">, we wouldn't
     // be able to manipulate x.svg with d3.js, or other DOM fns.
-    d3.xml(svg_url, function (error, xml) {
-
-        if (uploadXML != null) {
-            xml = uploadXML;
-        }
+    let renderXml = function (error, xml) {
         if (error && uploadXML == null) {
             showGraphMessage(selector, "The graph SVG could not be loaded.");
             return;
@@ -405,11 +447,7 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
         // Obtain the graph description. Doing this within the
         // d3.xml success callback, to gurantee the svg/xml
         // has loaded.
-        d3.json(json_url, function (error, data) {
-
-            if (uploadJSON !== null) {
-                data = uploadJSON
-            }
+        let renderJson = function (error, data) {
 
             if (error && uploadJSON === null) {
                 console.error("No Terraform files were found, so JSON details will not be available. The graph is still usable but without all features enabled such as filtering content");
@@ -855,6 +893,19 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
 
                 var handle_refocus = function () {
                     if (sticky_node) {
+                        let source = graphSources.get(selector);
+                        if (source && source.type === "dot") {
+                            renderDotSource(
+                                source.dot,
+                                selector,
+                                Object.assign({}, source.options, {
+                                    refocus: sticky_node.label
+                                }),
+                                clear_listeners
+                            );
+                            return;
+                        }
+
                         $(selector + ' svg').remove();
                         clear_listeners();
                         if (!state['params']) {
@@ -1015,7 +1066,19 @@ blastradius = function (selector, svg_url, json_url, br_state = {}, uploadXML = 
                 });
 
             } // end if(interactive)
-        }); // end json success callback
-    }); // end svg success callback
+        }; // end json success callback
+
+        if (uploadJSON !== null) {
+            renderJson(null, uploadJSON);
+        } else {
+            d3.json(json_url, renderJson);
+        }
+    }; // end svg success callback
+
+    if (uploadXML !== null) {
+        renderXml(null, uploadXML);
+    } else {
+        d3.xml(svg_url, renderXml);
+    }
 
 } // end blastradius()
